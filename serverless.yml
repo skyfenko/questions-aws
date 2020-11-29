@@ -15,3 +15,38 @@ provider:
 package:
   exclude:
     - tests/**
+
+resources:
+  Resources:
+    QuestionsDynamoTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.QUESTIONS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: lang
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: lang
+            KeyType: RANGE
+        # todo global secondary index
+        BillingMode: PAY_PER_REQUEST
+    TranslateTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: TranslateTopic
+        DisplayName: TranslateTopic
+        Tags:
+          - Key: Description
+            Value: Handle messages describing text, initial and target lang to translate. Initial lang is not populated to the topic
+    AudioConvertTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: AudioConvertTopic
+        DisplayName: AudioConvertTopic
+        Tags:
+          - Key: Description
+            Value: Handle messages with already translated text to convert to MP3
