@@ -53,10 +53,10 @@ functions:
                 questionLevel: true
             template:
               application/json: '{
-               "id" : "$input.params(''id'')",
-              "lang" : "$input.params(''lang'')",
-              "questionGroup" : "$input.params(''questionGroup'')",
-              "questionLevel" : "$input.params(''questionLevel'')"
+                        "id" : "$input.params(''id'')",
+                        "lang" : "$input.params(''lang'')",
+                        "questionGroup" : "$input.params(''questionGroup'')",
+                        "questionLevel" : "$input.params(''questionLevel'')"
               }'
           response:
             headers:
