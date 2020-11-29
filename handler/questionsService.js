@@ -61,8 +61,43 @@ const create = async (event) => {
     }
 };
 
-const get = async () => {
+const get = async (event) => {
+    const params = {
+        TableName: QUESTIONS_TABLE
+    };
 
+    // first try to get by id, then by lang + group + level
+    if (event.id) {
+        params.KeyConditionExpression = `id = :id`;
+        params.ExpressionAttributeValues = {
+            ":id": event.id
+        };
+    } else if (event.lang && event.group && event.level) {
+        params.Limit = 20;
+        params.IndexName = 'LangGroupIndex';
+        params.KeyConditionExpression = `lang = :lang and group = :group`;
+        params.FilterExpression = `level = :level`;
+        params.ExpressionAttributeValues = {
+            ":lang": event.lang,
+            ":group": parseInt(event.group),
+            ":level": parseInt(event.level)
+        };
+    } else {
+        return {
+            statusCode: 400,
+            error: `Could not get: ${JSON.stringify(event)}`
+        };
+    }
+
+    try {
+        const data = await dynamoDb.query(params).promise();
+        return {statusCode: 200, body: data.Items};
+    } catch (error) {
+        return {
+            statusCode: 400,
+            error: `Could not get a question: ${error.stack}`
+        };
+    }
 };
 
 const translate = async () => {
