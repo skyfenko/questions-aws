@@ -1,0 +1,17 @@
+service: questions-aws-stack
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: dev
+  region: eu-west-1
+  environment:
+    QUESTIONS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-questions
+    AWS_DEPLOY_REGION: ${self:provider.region}
+    S3_AUDIO_BUCKET: ${self:service}-${opt:stage, self:provider.stage}-questions-audio
+    S3_IMAGE_BUCKET: ${self:service}-${opt:stage, self:provider.stage}-questions-images
+
+# exclude tests from package
+package:
+  exclude:
+    - tests/**
