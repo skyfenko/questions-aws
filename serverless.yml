@@ -16,6 +16,70 @@ package:
   exclude:
     - tests/**
 
+functions:
+  createQuestion:
+    handler: handler/questionsService.create
+    events:
+      - http:
+          method: POST
+          path: /questions
+          integration: lambda
+          cors: true
+          request:
+            passThrough: NEVER
+          response:
+            headers:
+              Content-Type: "'application/json'"
+    environment:
+      TRANSLATE_TOPIC: !Ref TranslateTopic
+      AUDIO_TOPIC: !Ref AudioConvertTopic
+      S3_IMAGE_BUCKET: ${self:provider.environment.S3_IMAGE_BUCKET}
+      S3_AUDIO_BUCKET: ${self:provider.environment.S3_AUDIO_BUCKET}
+  getQuestion:
+    handler: handler/questionsService.get
+    events:
+      - http:
+          method: GET
+          path: /questions
+          integration: lambda
+          cors: true
+          request:
+            passThrough: WHEN_NO_MATCH
+            parameters:
+              querystrings:
+                id: true
+                lang: true
+                questionGroup: true
+                questionLevel: true
+            template:
+              application/json: '{
+               "id" : "$input.params(''id'')",
+              "lang" : "$input.params(''lang'')",
+              "questionGroup" : "$input.params(''questionGroup'')",
+              "questionLevel" : "$input.params(''questionLevel'')"
+              }'
+          response:
+            headers:
+              Content-Type: "'application/json'"
+  translateQuestion:
+    handler: handler/questionsService.translate
+    events:
+      - sns:
+          arn: !Ref TranslateTopic
+          topicName: TranslateTopic
+    environment:
+      S3_IMAGE_BUCKET: ${self:provider.environment.S3_IMAGE_BUCKET}
+      S3_AUDIO_BUCKET: ${self:provider.environment.S3_AUDIO_BUCKET}
+      AUDIO_TOPIC: !Ref AudioConvertTopic
+  convertQuestionToAudio:
+    handler: handler/questionsService.convertToAudio
+    events:
+      - sns:
+          arn: !Ref AudioConvertTopic
+          topicName: AudioConvertTopic
+    environment:
+      S3_AUDIO_BUCKET: ${self:provider.environment.S3_AUDIO_BUCKET}
+
 resources:
   Resources:
     QuestionsDynamoTable:
