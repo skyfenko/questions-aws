@@ -8,20 +8,28 @@ const {languageToVoiceMap} = require('../resources/languageToVoiceMap');
 const {questionStatus} = require('../enums/questionStatus')
 
 /**
- * Send original item directly to audio topic since it is already 'translated'.
+ * Send the item directly to audio topic.
+ * Compose subject based on 'original' property
  *
- * @param params item being saved in db
+ * @param item item being saved in db
  * @param topic name of audio topic
+ * @param original true if original item
  * @returns {Promise<void>}
  */
-const sendToAudioTopic = async (params, topic) => {
-    const message = JSON.parse(JSON.stringify(params.Item));
+const sendToAudioTopic = async (item, topic, original) => {
+    const message = JSON.parse(JSON.stringify(item));
 
     message.voice = languageToVoiceMap[message.lang].voice;
 
+    // check if the message is original and then compose subject
+    let subject = `Original message with id ${params.Item.id} to convert to mp3`;
+    if (!original) {
+        subject = `Translated message with id ${item.id}`;
+    }
+
     const snsMessage = {
         Message: JSON.stringify(message),
-        Subject: `Original message with id ${params.Item.id} to convert to mp3`,
+        Subject: subject,
         TopicArn: topic
     };
     await sns.publish(snsMessage).promise();
