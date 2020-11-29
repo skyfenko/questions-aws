@@ -23,4 +23,25 @@ const uploadImage = async (body, s3ImageBucket) => {
     await s3.upload(params).promise();
 };
 
-module.exports = {uploadImage}
+/**
+ * Upload stream as MP3 file with public read ACL
+ *
+ * @param stream AWS Polly stream
+ * @param event item being saved in DB
+ * @param prefix either 'q' for question or 'a' for answer
+ * @param s3AudioBucket name of s3 audio bucket
+ * @returns {Promise<void>}
+ */
+const uploadAudio = async (stream, event, prefix, s3AudioBucket) => {
+
+    const params = {
+        Bucket: s3AudioBucket,
+        Key: `${event.category}/${event.group}/${prefix}-${event.id}.mp3`,
+        Body: stream,
+        ACL: 'public-read'
+    };
+
+    await s3.upload(params).promise();
+};
+
+module.exports = {uploadImage, uploadAudio}

@@ -16,6 +16,7 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient({api_version: '2012-08-10'});
 const {uploadImage} = require('./s3UploadService')
 const {sendToAudioTopic, sendToTranslateTopic} = require('./snsService')
 const {translateText} = require('./translateService');
+const {convert} = require('./audioService');
 
 const {v4} = require('uuid');
 
@@ -46,7 +47,8 @@ const create = async (event) => {
     };
     // adding paths in advance to reduce number of updates to dynamoDB
     params.Item.imagePath = `https://s3-${AWS_DEPLOY_REGION}.amazonaws.com/${S3_IMAGE_BUCKET}/${params.Item.category}/${params.Item.group}/${params.Item.id}.jpg`;
-    params.Item.audioPath = `https://s3-${AWS_DEPLOY_REGION}.amazonaws.com/${S3_AUDIO_BUCKET}/${params.Item.category}/${params.Item.group}/${params.Item.id}.mp3`;
+    params.Item.audioQPath = `https://s3-${AWS_DEPLOY_REGION}.amazonaws.com/${S3_AUDIO_BUCKET}/${params.Item.category}/${params.Item.group}/q-${params.Item.id}.mp3`;
+    params.Item.audioAPath = `https://s3-${AWS_DEPLOY_REGION}.amazonaws.com/${S3_AUDIO_BUCKET}/${params.Item.category}/${params.Item.group}/a-${params.Item.id}.mp3`;
 
     try {
         //save to DB
@@ -124,7 +126,7 @@ const get = async (event) => {
  * and send to audio topic for further converting to MP3
  *
  * @param event SNS message
- * @returns {Promise<{body: {questionId: *}, status: number}|{error: string, statusCode: number}>}
+ * @returns {Promise<{body: {id: *}, status: number}|{error: string, statusCode: number}>}
  */
 const translate = async (event) => {
     const newItem = JSON.parse(event.Records[0].Sns.Message);
@@ -132,8 +134,9 @@ const translate = async (event) => {
     newItem.status = questionStatus.TRANSLATED;
 
     // adding paths in advance to reduce number of calls to dynamoDB as updates
-    newItem.imagePath = `https://s3-${AWS_DEPLOY_REGION}.amazonaws.com/${S3_IMAGE_BUCKET}/${newItem.category}/${newItem.questionGroup}/${newItem.parentId}.jpg`;
-    newItem.audioPath = `https://s3-${AWS_DEPLOY_REGION}.amazonaws.com/${S3_AUDIO_BUCKET}/${newItem.category}/${newItem.questionGroup}/${newItem.id}.mp3`;
+    newItem.imagePath = `https://s3-${AWS_DEPLOY_REGION}.amazonaws.com/${S3_IMAGE_BUCKET}/${newItem.category}/${newItem.group}/${newItem.parentId}.jpg`;
+    newItem.audioQPath = `https://s3-${AWS_DEPLOY_REGION}.amazonaws.com/${S3_AUDIO_BUCKET}/${newItem.category}/${newItem.group}/q-${newItem.id}.mp3`;
+    newItem.audioAPath = `https://s3-${AWS_DEPLOY_REGION}.amazonaws.com/${S3_AUDIO_BUCKET}/${newItem.category}/${newItem.group}/a-${newItem.id}.mp3`;
 
     try {
         await translateText(newItem);
@@ -156,8 +159,24 @@ const translate = async (event) => {
     }
 };
 
+/**
+ * Convert question and answer to audio and upload them to S3
+ *
+ * @param event SNS message
+ * @returns {Promise<{body: {id: *}, status: number}|{error: string, statusCode: number}>}
+ */
 const convertToAudio = async (event) => {
+    const parsedEvent = JSON.parse(event.Records[0].Sns.Message);
 
+    try {
+        await convert(parsedEvent, S3_AUDIO_BUCKET);
+        return {status: 200, body: {id: parsedEvent.id}};
+    } catch (error) {
+        return {
+            statusCode: 400,
+            error: `Could not convert to mp3: ${JSON.stringify(params)} ${error.stack}`
+        };
+    }
 };
 
 module.exports = {create, get, translate, convertToAudio}
