@@ -1,8 +1,6 @@
 'use strict'
 
-const AWS = require('aws-sdk');
-AWS.config.update({region: AWS_DEPLOY_REGION});
-const sns = new AWS.SNS();
+const {sns} = require('../utils/awsServices')
 
 const {languageToVoiceMap} = require('../resources/languageToVoiceMap');
 const {questionStatus} = require('../enums/questionStatus')

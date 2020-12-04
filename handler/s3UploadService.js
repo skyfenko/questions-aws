@@ -1,8 +1,6 @@
 'use strict'
 
-const AWS = require('aws-sdk');
-AWS.config.update({region: AWS_DEPLOY_REGION});
-const s3 = new AWS.S3({apiVersion: '2006-03-01'});
+const {s3} = require('../utils/awsServices')
 
 /**
  * Upload JPEG image to S3 with public read ACL

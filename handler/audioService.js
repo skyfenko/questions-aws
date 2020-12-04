@@ -1,8 +1,6 @@
 'use strict'
 
-const AWS = require('aws-sdk');
-AWS.config.update({region: AWS_DEPLOY_REGION});
-const polly = new AWS.Polly();
+const {polly} = require('../utils/awsServices')
 
 const {uploadAudio} = require('./s3UploadService');
 

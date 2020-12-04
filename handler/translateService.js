@@ -1,9 +1,6 @@
 'use strict'
 
-const AWS = require('aws-sdk');
-const AWS_DEPLOY_REGION = process.env.AWS_DEPLOY_REGION;
-AWS.config.update({region: AWS_DEPLOY_REGION});
-const translate = new AWS.Translate();
+const {translate} = require('../utils/awsServices')
 
 const translateText = async (newItem) => {
     const targetLang = newItem.lang.split("-")[0];

@@ -1,17 +1,12 @@
 'use strict'
 
-const AWS = require('aws-sdk');
-
 const QUESTIONS_TABLE = process.env.QUESTIONS_TABLE;
 const S3_IMAGE_BUCKET = process.env.S3_IMAGE_BUCKET;
 const S3_AUDIO_BUCKET = process.env.S3_AUDIO_BUCKET;
 const AUDIO_TOPIC = process.env.AUDIO_TOPIC;
 const TRANSLATE_TOPIC = process.env.TRANSLATE_TOPIC;
-const AWS_DEPLOY_REGION = process.env.AWS_DEPLOY_REGION;
 
-// clients of AWS services
-AWS.config.update({region: AWS_DEPLOY_REGION});
-const dynamoDb = new AWS.DynamoDB.DocumentClient({api_version: '2012-08-10'});
+const {dynamoDb} = require('../utils/awsServices')
 
 const {uploadImage} = require('./s3UploadService')
 const {sendToAudioTopic, sendToTranslateTopic} = require('./snsService')
