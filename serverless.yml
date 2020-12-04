@@ -33,8 +33,6 @@ functions:
     environment:
       TRANSLATE_TOPIC: !Ref TranslateTopic
       AUDIO_TOPIC: !Ref AudioConvertTopic
-      S3_IMAGE_BUCKET: ${self:provider.environment.S3_IMAGE_BUCKET}
-      S3_AUDIO_BUCKET: ${self:provider.environment.S3_AUDIO_BUCKET}
   getQuestion:
     handler: handler/questionsService.get
     events:
@@ -68,8 +66,6 @@ functions:
           arn: !Ref TranslateTopic
           topicName: TranslateTopic
     environment:
-      S3_IMAGE_BUCKET: ${self:provider.environment.S3_IMAGE_BUCKET}
-      S3_AUDIO_BUCKET: ${self:provider.environment.S3_AUDIO_BUCKET}
       AUDIO_TOPIC: !Ref AudioConvertTopic
   convertQuestionToAudio:
     handler: handler/questionsService.convertToAudio
@@ -77,8 +73,6 @@ functions:
       - sns:
           arn: !Ref AudioConvertTopic
           topicName: AudioConvertTopic
-    environment:
-      S3_AUDIO_BUCKET: ${self:provider.environment.S3_AUDIO_BUCKET}
 
 resources:
   Resources:
@@ -91,15 +85,15 @@ resources:
         ResponseType: DEFAULT_4XX
         RestApiId:
           Ref: 'ApiGatewayRestApi'
-      GatewayResponseDefault5XX:
-        Type: 'AWS::ApiGateway::GatewayResponse'
-        Properties:
-          ResponseParameters:
-            gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
-            gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
-          ResponseType: DEFAULT_5XX
-          RestApiId:
-            Ref: 'ApiGatewayRestApi'
+    GatewayResponseDefault5XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_5XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
     QuestionsDynamoTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -108,6 +102,8 @@ resources:
           - AttributeName: id
             AttributeType: S
           - AttributeName: lang
+            AttributeType: S
+          - AttributeName: group
             AttributeType: S
         KeySchema:
           - AttributeName: id
@@ -131,7 +127,7 @@ resources:
         DisplayName: TranslateTopic
         Tags:
           - Key: Description
-            Value: Handle messages describing text, initial and target lang to translate. Initial lang is not populated to the topic
+            Value: Handle messages for translation
     AudioConvertTopic:
       Type: AWS::SNS::Topic
       Properties:
